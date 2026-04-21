@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+  <title>Hobbies · Calendar + Hobby Tracker</title>
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- PWA manifest (create your own manifest.json for installability) -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#2c3e4e">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background: linear-gradient(145deg, #f7f9fc 0%, #eef2f5 100%);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, sans-serif;
+      padding: 20px 16px 40px;
+      color: #1e2a3e;
+    }
+
+    .tracker-container {
+      max-width: 650px;
+      margin: 0 auto;
+    }
+
+    /* header */
+    .brand {
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .brand h1 {
+      font-size: 2rem;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #3b4b5e, #2c3e4e);
+      background-clip: text;
+      -webkit-background-clip: text;
+      color: transparent;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sub {
+      color: #5d6f83;
+      font-size: 0.8rem;
+      margin-top: 4px;
+    }
+
+    /* ----- CALENDAR SECTION ----- */
+    .calendar-card {
+      background: white;
+      border-radius: 32px;
+      padding: 1rem 1rem 1.2rem;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.05);
+      border: 1px solid rgba(255,255,255,0.6);
+    }
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .month-year {
+      font-weight: 700;
+      font-size: 1.3rem;
+      background: #f1f5f9;
+      padding: 6px 16px;
+      border-radius: 40px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .calendar-nav {
+      display: flex;
+      gap: 12px;
+    }
+    .calendar-nav button {
+      background: white;
+      border: none;
+      width: 44px;
+      height: 44px;
+      border-radius: 30px;
+      font-size: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+      transition: 0.2s;
+    }
+    .calendar-nav button:active {
+      transform: scale(0.94);
+      background: #e6edf4;
+    }
+    .weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      text-align: center;
+      font-weight: 600;
+      color: #5c6f87;
+      margin-bottom: 8px;
+      font-size: 0.8rem;
+    }
+    .calendar-days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+    .cal-day {
+      aspect-ratio: 1 / 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f8fafc;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.1s ease;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+      border: 1px solid #eef2f8;
+      position: relative;
+    }
+    .cal-day.empty {
+      background: transparent;
+      box-shadow: none;
+      cursor: default;
+      border: 1px solid transparent;
+    }
+    .cal-day.selected {
+      border: 2px solid #2c3e4e;
+      background: #eef2ff;
+      transform: scale(0.98);
+    }
+    /* Color coding based on completion ratio */
+    .cal-day.complete-all {
+      background: #4caf50;
+      color: white;
+      border-color: #388e3c;
+    }
+    .cal-day.complete-some {
+      background: #ffb74d;
+      color: #2c2c2c;
+      border-color: #f57c00;
+    }
+    .cal-day.complete-none {
+      background: #eeeeee;
+      color: #5f6c80;
+      border-color: #e0e0e0;
+    }
+    .cal-day.today {
+      font-weight: 800;
+      box-shadow: 0 0 0 2px #2c3e4e33;
+    }
+    .day-number {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+    .completion-dot {
+      font-size: 0.65rem;
+      margin-top: 2px;
+      opacity: 0.9;
+    }
+    /* date panel (compact) */
+    .date-panel {
+      background: white;
+      border-radius: 28px;
+      padding: 0.7rem 1rem;
+      margin-bottom: 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.02);
+      border: 1px solid #eef2f8;
+    }
+    .date-nav {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    .date-nav button {
+      background: #f1f5f9;
+      border: none;
+      width: 40px;
+      height: 40px;
+      border-radius: 30px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    .current-date {
+      font-weight: 600;
+      background: #f1f5f9;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 0.9rem;
+    }
+    .stats-card {
+      background: #ffffffdd;
+      backdrop-filter: blur(4px);
+      border-radius: 28px;
+      padding: 10px 18px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .completion-badge {
+      background: #2c3e4e;
+      padding: 6px 16px;
+      border-radius: 80px;
+      color: white;
+      font-weight: 500;
+      font-size: 0.85rem;
+    }
+    .hobbies-list {
+      background: white;
+      border-radius: 32px;
+      overflow: hidden;
+      margin-bottom: 24px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.03);
+    }
+    .hobby-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid #edf2f7;
+    }
+    .hobby-item:last-child {
+      border-bottom: none;
+    }
+    .hobby-info {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      flex: 1;
+    }
+    .hobby-icon {
+      font-size: 1.5rem;
+      width: 40px;
+      text-align: center;
+    }
+    .hobby-name {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+    .custom-badge {
+      background: #eef2ff;
+      font-size: 0.65rem;
+      padding: 2px 8px;
+      border-radius: 40px;
+      margin-left: 8px;
+    }
+    .checkbox-custom {
+      width: 26px;
+      height: 26px;
+      accent-color: #3b82f6;
+      cursor: pointer;
+    }
+    .delete-hobby {
+      background: none;
+      border: none;
+      font-size: 1.2rem;
+      color: #a0bbd0;
+      cursor: pointer;
+      width: 38px;
+      height: 38px;
+      border-radius: 30px;
+    }
+    .add-hobby {
+      background: white;
+      border-radius: 32px;
+      padding: 12px 18px 18px;
+      margin-bottom: 18px;
+    }
+    .add-form {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .add-form input {
+      flex: 2;
+      padding: 12px 18px;
+      border-radius: 60px;
+      border: 1px solid #cfdfed;
+      font-size: 0.95rem;
+    }
+    .add-form button {
+      background: #2c3e4e;
+      border: none;
+      padding: 0 22px;
+      border-radius: 60px;
+      color: white;
+      font-weight: 600;
+    }
+    .reset-btn {
+      background: #f1f3f7;
+      width: 100%;
+      padding: 10px;
+      border-radius: 60px;
+      margin-top: 14px;
+      border: none;
+      font-weight: 500;
+    }
+    footer {
+      text-align: center;
+      font-size: 0.7rem;
+      color: #8ca3b9;
+      margin-top: 20px;
+    }
+    @media (max-width: 500px) {
+      .cal-day {
+        font-size: 0.7rem;
+      }
+      .day-number {
+        font-size: 0.75rem;
+      }
+      .hobby-item {
+        padding: 12px 14px;
+      }
+    }
+    button {
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+<div class="tracker-container">
+  <div class="brand">
+    <h1><i class="fas fa-calendar-alt"></i> Hobbies</h1>
+    <div class="sub">colorful calendar · daily habits</div>
+  </div>
+
+  <!-- ========== COLOR CALENDAR ========== -->
+  <div class="calendar-card">
+    <div class="calendar-header">
+      <div class="month-year"><i class="far fa-calendar"></i> <span id="monthYearText"></span></div>
+      <div class="calendar-nav">
+        <button id="prevMonthBtn"><i class="fas fa-chevron-left"></i></button>
+        <button id="nextMonthBtn"><i class="fas fa-chevron-right"></i></button>
+      </div>
+    </div>
+    <div class="weekdays">
+      <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
+    </div>
+    <div id="calendarDaysGrid" class="calendar-days"></div>
+    <div style="font-size:0.7rem; margin-top: 12px; text-align: center; color:#6f8faa;">
+      <i class="fas fa-circle" style="color:#4caf50; font-size:0.6rem;"></i> all done 
+      <i class="fas fa-circle" style="color:#ffb74d; font-size:0.6rem;"></i> partial 
+      <i class="fas fa-circle" style="color:#dddddd; font-size:0.6rem;"></i> none
+    </div>
+  </div>
+
+  <!-- legacy date navigation (synchronized with calendar) -->
+  <div class="date-panel">
+    <div class="date-nav">
+      <button id="prevDayBtn"><i class="fas fa-chevron-left"></i></button>
+      <div class="current-date"><i class="far fa-calendar-check"></i> <span id="dateLabel">--</span></div>
+      <button id="nextDayBtn"><i class="fas fa-chevron-right"></i></button>
+      <button id="todayBtn"><i class="fas fa-sun"></i></button>
+    </div>
+    <input type="date" id="datePickerInput" style="padding: 8px 12px; border-radius: 40px; border:1px solid #dce5ec; font-family:inherit;">
+  </div>
+
+  <!-- stats -->
+  <div class="stats-card">
+    <div class="completion-badge"><i class="fas fa-check-circle"></i> <span id="doneCount">0</span> / <span id="totalHobbyCount">0</span> completed</div>
+    <div class="motivation" id="motivationMsg">✨ tap a date or hobby</div>
+  </div>
+
+  <!-- hobbies list -->
+  <div class="hobbies-list" id="hobbiesListContainer"></div>
+
+  <!-- add custom -->
+  <div class="add-hobby">
+    <h3 style="margin-bottom:8px;"><i class="fas fa-plus-circle"></i> Custom hobby</h3>
+    <div class="add-form">
+      <input type="text" id="newHobbyName" placeholder="e.g., Meditation, Coding" autocomplete="off">
+      <button id="addHobbyBtn"><i class="fas fa-plus"></i> Add</button>
+    </div>
+    <button id="resetAllDataBtn" class="reset-btn"><i class="fas fa-database"></i> Reset all data</button>
+  </div>
+  <footer>✔️ color = daily progress | click any date → track hobbies</footer>
+</div>
+
+<script>
+  // ---------- DATA ----------
+  const DEFAULT_HOBBIES = [
+    { id: "reading", name: "Reading", icon: "fa-book-open", emoji: "📖", isDefault: true },
+    { id: "writing", name: "Writing", icon: "fa-pen-fancy", emoji: "✍️", isDefault: true },
+    { id: "practice", name: "Practice", icon: "fa-guitar", emoji: "🎯", isDefault: true },
+    { id: "exercise", name: "Exercise", icon: "fa-person-walking", emoji: "💪", isDefault: true },
+    { id: "sleeping", name: "Sleeping", icon: "fa-moon", emoji: "😴", isDefault: true }
+  ];
+
+  let hobbies = [];          // { id, name, isDefault, icon, emoji }
+  let completions = {};      // { "YYYY-MM-DD": { hobbyId: bool } }
+  let currentDate = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+
+  // calendar state
+  let calendarYear = new Date().getFullYear();
+  let calendarMonth = new Date().getMonth(); // 0-11
+
+  // ---------- HELPERS ----------
+  function formatDateReadable(dateStr) {
+    const [y,m,d] = dateStr.split('-');
+    const dateObj = new Date(y, m-1, d);
+    return dateObj.toLocaleDateString(undefined, { weekday:'short', month:'short', day:'numeric' });
+  }
+
+  function persistHobbies() { localStorage.setItem('hobbies_hobbies', JSON.stringify(hobbies)); }
+  function persistCompletions() { localStorage.setItem('hobbies_completions', JSON.stringify(completions)); }
+
+  function loadData() {
+    const storedHobbies = localStorage.getItem('hobbies_hobbies');
+    if (storedHobbies) {
+      hobbies = JSON.parse(storedHobbies);
+    } else {
+      hobbies = DEFAULT_HOBBIES.map(h => ({ ...h, isDefault: true }));
+      persistHobbies();
+    }
+    const storedCompletions = localStorage.getItem('hobbies_completions');
+    if (storedCompletions) completions = JSON.parse(storedCompletions);
+    else completions = {};
+    persistCompletions();
+  }
+
+  function getCompletionStatus(hobbyId, dateStr) {
+    return !!(completions[dateStr] && completions[dateStr][hobbyId]);
+  }
+
+  function setCompletion(hobbyId, isChecked) {
+    if (!completions[currentDate]) completions[currentDate] = {};
+    completions[currentDate][hobbyId] = isChecked;
+    persistCompletions();
+    renderHobbiesList();
+    updateStatsAndMotivation();
+    renderCalendar();        // update colors for current month
+  }
+
+  function addCustomHobby(rawName) {
+    let name = rawName.trim();
+    if (!name) { alert("Please enter a hobby name"); return false; }
+    if (hobbies.some(h => h.name.toLowerCase() === name.toLowerCase())) {
+      alert(`"${name}" already exists!`);
+      return false;
+    }
+    const newId = `custom_${Date.now()}_${Math.floor(Math.random()*10000)}`;
+    hobbies.push({ id: newId, name, isDefault: false, icon: "fa-star", emoji: "✨" });
+    persistHobbies();
+    renderHobbiesList();
+    updateStatsAndMotivation();
+    renderCalendar();   // total hobbies changed -> all dates color may update
+    return true;
+  }
+
+  function deleteCustomHobby(hobbyId) {
+    const hobby = hobbies.find(h => h.id === hobbyId);
+    if (!hobby || hobby.isDefault) { alert("Default hobbies cannot be deleted."); return; }
+    hobbies = hobbies.filter(h => h.id !== hobbyId);
+    persistHobbies();
+    // remove from completions
+    Object.keys(completions).forEach(dateKey => {
+      if (completions[dateKey] && completions[dateKey][hobbyId] !== undefined)
+        delete completions[dateKey][hobbyId];
+    });
+    persistCompletions();
+    renderHobbiesList();
+    updateStatsAndMotivation();
+    renderCalendar();
+  }
+
+  function resetAllData() {
+    if (confirm("⚠️ Reset all progress + custom hobbies? irreversible.")) {
+      hobbies = DEFAULT_HOBBIES.map(h => ({ ...h, isDefault: true }));
+      completions = {};
+      persistHobbies();
+      persistCompletions();
+      currentDate = new Date().toISOString().slice(0,10);
+      // sync calendar view to currentDate month/year
+      const [yy, mm] = currentDate.split('-');
+      calendarYear = parseInt(yy);
+      calendarMonth = parseInt(mm)-1;
+      renderHobbiesList();
+      updateStatsAndMotivation();
+      renderCalendar();
+      document.getElementById('dateLabel').innerText = formatDateReadable(currentDate);
+      document.getElementById('datePickerInput').value = currentDate;
+    }
+  }
+
+  function updateStatsAndMotivation() {
+    const total = hobbies.length;
+    let completed = 0;
+    hobbies.forEach(h => { if (getCompletionStatus(h.id, currentDate)) completed++; });
+    document.getElementById('doneCount').innerText = completed;
+    document.getElementById('totalHobbyCount').innerText = total;
+    const msg = document.getElementById('motivationMsg');
+    if (completed === total && total>0) msg.innerHTML = '🏆 Perfect day! All done!';
+    else if (completed >= total/2) msg.innerHTML = '🌟 Great progress! Keep going.';
+    else if (completed > 0) msg.innerHTML = '🌱 Every habit counts.';
+    else msg.innerHTML = '✨ Tap checkboxes to track today.';
+  }
+
+  // render hobby list for currentDate
+  function renderHobbiesList() {
+    const container = document.getElementById('hobbiesListContainer');
+    if (!container) return;
+    if (hobbies.length === 0) {
+      container.innerHTML = `<div style="padding:32px; text-align:center;">➕ Add a hobby</div>`;
+      updateStatsAndMotivation();
+      return;
+    }
+    let html = '';
+    hobbies.forEach(hobby => {
+      const isChecked = getCompletionStatus(hobby.id, currentDate);
+      const iconHtml = hobby.isDefault && hobby.icon ? `<i class="fas ${hobby.icon}"></i>` : `<span style="font-size:1.4rem;">${hobby.emoji || '⭐'}</span>`;
+      const deleteBtn = !hobby.isDefault ? `<button class="delete-hobby" data-id="${hobby.id}"><i class="fas fa-trash-alt"></i></button>` : '';
+      html += `
+        <div class="hobby-item" data-hobby-id="${hobby.id}">
+          <div class="hobby-info">
+            <div class="hobby-icon">${iconHtml}</div>
+            <div class="hobby-name">${escapeHtml(hobby.name)}${!hobby.isDefault ? '<span class="custom-badge">custom</span>' : ''}</div>
+          </div>
+          <div class="hobby-action">
+            ${deleteBtn}
+            <input type="checkbox" class="checkbox-custom hobby-checkbox" data-id="${hobby.id}" ${isChecked ? 'checked' : ''}>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+    // attach checkbox events
+    document.querySelectorAll('.hobby-checkbox').forEach(cb => {
+      cb.addEventListener('change', (e) => {
+        const hobbyId = cb.getAttribute('data-id');
+        setCompletion(hobbyId, cb.checked);
+      });
+    });
+    document.querySelectorAll('.delete-hobby').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const id = btn.getAttribute('data-id');
+        deleteCustomHobby(id);
+      });
+    });
+    updateStatsAndMotivation();
+  }
+
+  function escapeHtml(str) {
+    return str.replace(/[&<>]/g, m => m === '&' ? '&amp;' : m === '<' ? '&lt;' : '&gt;');
+  }
+
+  // ----- CALENDAR RENDERING (color based on completion ratio)-----
+  function getCompletionRatioForDate(dateStr) {
+    const total = hobbies.length;
+    if (total === 0) return 0;
+    let completed = 0;
+    hobbies.forEach(h => { if (getCompletionStatus(h.id, dateStr)) completed++; });
+    return completed / total;
+  }
+
+  function getColorClassForDate(dateStr) {
+    const total = hobbies.length;
+    if (total === 0) return 'complete-none';
+    let completed = 0;
+    hobbies.forEach(h => { if (getCompletionStatus(h.id, dateStr)) completed++; });
+    if (completed === total) return 'complete-all';
+    if (completed > 0) return 'complete-some';
+    return 'complete-none';
+  }
+
+  function renderCalendar() {
+    const firstDayOfMonth = new Date(calendarYear, calendarMonth, 1);
+    const startWeekday = firstDayOfMonth.getDay(); // 0 = Sunday, but we want Monday first => adjust
+    let startOffset = startWeekday === 0 ? 6 : startWeekday - 1; // Mon=0
+    const daysInMonth = new Date(calendarYear, calendarMonth + 1, 0).getDate();
+    const todayStr = new Date().toISOString().slice(0,10);
+    
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    document.getElementById('monthYearText').innerText = `${monthNames[calendarMonth]} ${calendarYear}`;
+    
+    const grid = document.getElementById('calendarDaysGrid');
+    let cells = [];
+    // empty cells before month start
+    for (let i = 0; i < startOffset; i++) cells.push({ empty: true });
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateStr = `${calendarYear}-${String(calendarMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const colorClass = getColorClassForDate(dateStr);
+      const isToday = (dateStr === todayStr);
+      const isSelected = (dateStr === currentDate);
+      const completionRatio = getCompletionRatioForDate(dateStr);
+      const percentText = Math.round(completionRatio * 100);
+      cells.push({ empty: false, day: d, dateStr, colorClass, isToday, isSelected, percentText });
+    }
+    // fill remaining to 6 rows approx (42 cells)
+    const totalCells = Math.ceil((startOffset + daysInMonth) / 7) * 7;
+    while (cells.length < totalCells) cells.push({ empty: true });
+    
+    let html = '';
+    cells.forEach(cell => {
+      if (cell.empty) {
+        html += `<div class="cal-day empty"></div>`;
+      } else {
+        let additionalClass = `${cell.colorClass} ${cell.isSelected ? 'selected' : ''} ${cell.isToday ? 'today' : ''}`;
+        html += `
+          <div class="cal-day ${additionalClass}" data-date="${cell.dateStr}">
+            <div class="day-number">${cell.day}</div>
+            <div class="completion-dot">${cell.percentText}%</div>
+          </div>
+        `;
+      }
+    });
+    grid.innerHTML = html;
+    // attach click events to each non-empty day
+    document.querySelectorAll('.cal-day[data-date]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        const newDate = el.getAttribute('data-date');
+        if (newDate) {
+          currentDate = newDate;
+          // update top panel
+          document.getElementById('dateLabel').innerText = formatDateReadable(currentDate);
+          document.getElementById('datePickerInput').value = currentDate;
+          renderHobbiesList();
+          renderCalendar();   // re-render to highlight new selected date
+          // also ensure month/year displayed matches if clicked date outside current calendar month? but calendar only shows current month days, fine.
+        }
+      });
+    });
+  }
+
+  function changeMonth(delta) {
+    let newMonth = calendarMonth + delta;
+    let newYear = calendarYear;
+    if (newMonth < 0) { newMonth = 11; newYear--; }
+    if (newMonth > 11) { newMonth = 0; newYear++; }
+    calendarYear = newYear;
+    calendarMonth = newMonth;
+    renderCalendar();
+  }
+
+  function setCurrentDateAndRender(newDateStr) {
+    currentDate = newDateStr;
+    document.getElementById('dateLabel').innerText = formatDateReadable(currentDate);
+    document.getElementById('datePickerInput').value = currentDate;
+    // sync calendar view to the month of new date
+    const [yy, mm] = currentDate.split('-');
+    calendarYear = parseInt(yy);
+    calendarMonth = parseInt(mm) - 1;
+    renderHobbiesList();
+    renderCalendar();
+    updateStatsAndMotivation();
+  }
+
+  function shiftDate(deltaDays) {
+    let newDate = new Date(currentDate + 'T12:00:00');
+    newDate.setDate(newDate.getDate() + deltaDays);
+    const year = newDate.getFullYear();
+    const month = String(newDate.getMonth() + 1).padStart(2,'0');
+    const day = String(newDate.getDate()).padStart(2,'0');
+    setCurrentDateAndRender(`${year}-${month}-${day}`);
+  }
+
+  // ----- INITIALIZATION -----
+  function init() {
+    loadData();
+    const today = new Date().toISOString().slice(0,10);
+    currentDate = today;
+    const [yy, mm] = today.split('-');
+    calendarYear = parseInt(yy);
+    calendarMonth = parseInt(mm) - 1;
+    document.getElementById('dateLabel').innerText = formatDateReadable(currentDate);
+    document.getElementById('datePickerInput').value = currentDate;
+    renderHobbiesList();
+    renderCalendar();
+    updateStatsAndMotivation();
+
+    // event binding
+    document.getElementById('prevDayBtn').addEventListener('click', () => shiftDate(-1));
+    document.getElementById('nextDayBtn').addEventListener('click', () => shiftDate(1));
+    document.getElementById('todayBtn').addEventListener('click', () => setCurrentDateAndRender(today));
+    document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
+    document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
+    document.getElementById('datePickerInput').addEventListener('change', (e) => {
+      if(e.target.value) setCurrentDateAndRender(e.target.value);
+    });
+    document.getElementById('addHobbyBtn').addEventListener('click', () => {
+      const input = document.getElementById('newHobbyName');
+      if(addCustomHobby(input.value)) input.value = '';
+    });
+    document.getElementById('resetAllDataBtn').addEventListener('click', resetAllData);
+    document.getElementById('newHobbyName').addEventListener('keypress', (e) => {
+      if(e.key === 'Enter') document.getElementById('addHobbyBtn').click();
+    });
+  }
+
+  init();
+</script>
+</body>
+</html>
